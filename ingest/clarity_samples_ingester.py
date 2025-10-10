@@ -5,7 +5,7 @@ from chromadb.config import Settings
 from tqdm import tqdm
 
 # Directory containing Clarity sample projects
-SAMPLES_DIR = "temp_clarity_clone/projects"
+SAMPLES_DIR = "clarity_code_samples"
 
 # Load the local embedding model once
 model = SentenceTransformer('all-MiniLM-L6-v2')
