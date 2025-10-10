@@ -23,11 +23,11 @@ Clarity Builder is an MCP-enabled RAG system that enhances Clarity smart contrac
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.11+
 - pip packages (install once):
 
 ```bash
-pip install -r ICP_Coder/requirements.txt
+pip install -r requirements.txt
 ```
 
 Create a `.env` in the project root:
