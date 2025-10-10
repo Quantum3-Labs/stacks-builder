@@ -1,0 +1,18 @@
+{
+  "directories": {
+    "chromadb_data": "chromadb_data",
+    "clarity_samples": "temp_clarity_clone/projects",
+    "clarity_docs": "clarity_official_docs"
+  },
+  "cron": {
+    "schedule": "0 2 1 * *",
+    "comment": "ChromaDB Re-initialization (Clarity)",
+    "user": null
+  },
+  "git": {
+    "clone_timeout": 300,
+    "retry_attempts": 3
+  }
+}
+
+
