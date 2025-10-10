@@ -8,6 +8,7 @@ GITIGNORE_FILE = ".gitignore"
 
 # List of GitHub repository URLs
 repo_urls = [
+    "https://github.com/clarity-lang/book.git",
     "https://github.com/clarity-lang/overview.git",
     "https://github.com/hirosystems/clarity-examples.git",
     "https://github.com/friedger/clarity-smart-contracts.git",

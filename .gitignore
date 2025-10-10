@@ -1,3 +1,25 @@
 # Environment variables
 .env
 
+clarity_code_samples/overview
+clarity_code_samples/clarity-examples
+clarity_code_samples/clarity-smart-contracts
+clarity_code_samples/clarity-marketplace
+clarity_code_samples/platform-template-nft-marketplace-dapp
+clarity_code_samples/sworn
+clarity_code_samples/stacy
+clarity_code_samples/Crowd-Funding-App
+clarity_code_samples/droplinked-stacks-contract
+clarity_code_samples/droplinked-stacks-contract
+clarity_code_samples/clarity-stacking-pools
+clarity_code_samples/clarity-deployed-contracts
+clarity_code_samples/clarity-dao
+clarity_code_samples/swapr
+clarity_code_samples/flexr
+clarity_code_samples/platform-template-nft-marketplace-dapp
+clarity_code_samples/clarity-examples
+clarity_code_samples/clarity-smart-contracts
+temp_clarity_clone/
+clarity_official_docs/
+chromadb_data/
+ICP_Coder/

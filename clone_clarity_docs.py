@@ -10,7 +10,7 @@ from pathlib import Path
 DOC_REPO_URL = "https://github.com/clarity-lang/book.git"
 TEMP_CLONE_DIR = "temp_clarity_clone"
 TARGET_DIR = "clarity_official_docs"
-DOC_SOURCE_PATH = "doc/md"
+DOC_SOURCE_PATH = "src"
 
 def run_command(cmd, cwd=None):
     """Run a shell command and return success status."""
