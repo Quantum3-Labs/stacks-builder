@@ -38,23 +38,7 @@ Create a `.env` in the project root (only this is required):
 GEMINI_API_KEY=your-gemini-api-key
 ```
 
-## One-Click Reinitialization (Recommended)
-
-This will clean `chromadb_data/`, clone Clarity repos and docs, and ingest everything.
-
-```bash
-python automated_ingestion_job/update_data_task.py
-```
-
-To run on a schedule (APScheduler):
-
-```bash
-python automated_ingestion_job/scheduler.py
-```
-
-Cron schedule is configured in `automated_ingestion_job/config.json`.
-
-## Manual Pipeline
+## Manual Pipeline (Recommended)
 
 1) Clone sources
 
