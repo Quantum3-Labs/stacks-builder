@@ -2,6 +2,11 @@
 
 Clarity Builder is an MCP-enabled RAG system that enhances Clarity smart contract coding for Cursor/VS Code. It ingests official Clarity docs and sample projects into ChromaDB, retrieves the most relevant context, and uses Gemini to produce accurate answers and code.
 
+## RAG Pipeline
+
+<img width="3978" height="3612" alt="Clarity_RAG" src="https://github.com/user-attachments/assets/717b3721-49cc-4042-b2e5-cba625f5f84f" />
+
+
 ## Architecture
 
 - Ingestion
