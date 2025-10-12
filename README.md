@@ -20,11 +20,8 @@ Clarity Builder is an MCP-enabled RAG system that enhances Clarity smart contrac
 - Tools (MCP)
   - `tool/get_clarity_context.py`: returns top doc chunks for a query.
   - `tool/generate_clarity_code.py`: generates responses/code with context.
-- Servers
-  - MCP: `MCP_Server/server.py` (tools exposed over StreamableHTTP).
-  - API: `API/auth_server.py` (auth, API keys) and `API/api_server.py` (OpenAI-compatible chat completions).
-- Automation
-  - `automated_ingestion_job/`: config, cleanup manager, orchestrator, scheduler, task.
+- Server
+  - MCP HTTP server: `MCP_Server/server.py` (tools exposed over StreamableHTTP at `/mcp/`).
 
 ## Requirements
 
@@ -35,11 +32,10 @@ Clarity Builder is an MCP-enabled RAG system that enhances Clarity smart contrac
 pip install -r requirements.txt
 ```
 
-Create a `.env` in the project root:
+Create a `.env` in the project root (only this is required):
 
 ```env
 GEMINI_API_KEY=your-gemini-api-key
-SECRET_KEY=your-secret-key-for-jwt
 ```
 
 ## One-Click Reinitialization (Recommended)
@@ -80,53 +76,30 @@ python ingest/clarity_docs_ingester.py      # adds markdown docs → clarity_doc
 python inspect_chromadb.py
 ```
 
-## Run the API Servers
+## MCP Server for Cursor (HTTP)
 
-1) Auth server (users, API keys)
-
-```bash
-python -m uvicorn API.auth_server:app --reload --port 8001
-```
-
-2) RAG API server (OpenAI-compatible /v1/chat/completions)
+1) Start the MCP server (JSON responses enabled):
 
 ```bash
-python -m uvicorn API.api_server:app --reload --port 8100
+python MCP_Server/server.py --port 3001 --json-response
 ```
 
-3) Example client (register, login, create key, call API)
-
-```bash
-python API/client_example.py
-```
-
-## MCP Server for Cursor
-
-Server entrypoint (registers tools `get_clarity_context` and `generate_clarity_code`):
-
-```bash
-python MCP_Server/server.py --port 3001
-```
-
-Client configuration (Cursor → Settings → MCP Tools):
+2) Configure Cursor → Settings → MCP Tools to point to the HTTP server:
 
 ```json
 {
   "mcpServers": {
     "clarity-builder": {
-      "command": "python",
-      "args": ["MCP_Server/server.py"],
-      "env": { "PYTHONPATH": ".", "GEMINI_API_KEY": "your-gemini-api-key" }
+      "transport": "http",
+      "url": "http://127.0.0.1:3001/mcp/"
     }
   }
 }
 ```
 
-Alternatively, you can expose a simple HTTP MCP-style context endpoint:
-
-```bash
-python -m uvicorn API.mcp_api_server:app --reload --port 8200
-```
+Notes:
+- The trailing slash in `/mcp/` avoids HTTP redirects.
+- You should see tools `get_clarity_context` and `generate_clarity_code` available.
 
 ## Project Layout (key paths)
 
@@ -137,14 +110,13 @@ python -m uvicorn API.mcp_api_server:app --reload --port 8200
 - `rag/`: retrieval and generation strategies
 - `tool/`: MCP tools
 - `MCP_Server/`: MCP server and config
-- `API/`: auth + RAG APIs and support modules
 - `automated_ingestion_job/`: full reinit pipeline
 
 ## Troubleshooting
 
-- Port in use: change ports in the commands above.
-- Missing data: re-run the ingestion (manual or automated).
-- Invalid API key: create a key via `API/client_example.py` or `POST /api-keys`.
+- Port in use: change the `--port` value when starting the server.
+- Missing data: re-run ingestion (manual or automated).
+- 404s on `/`: expected; only `/mcp/` is served.
 - Fresh DB: delete `chromadb_data/` and re-run the pipeline.
 
 ## Notes
