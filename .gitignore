@@ -6,3 +6,7 @@ temp_clarity_clone/
 clarity_official_docs/
 chromadb_data/
 automated_ingestion_job/__pycache__/
+API/__pycache__
+rag/__pycache__
+tool/__pycache__
+rag/__pycache__

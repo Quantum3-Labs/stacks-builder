@@ -17,29 +17,20 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
-from starlette.middleware.base import BaseHTTPMiddleware
-import ICP_Coder.API.database as database
-from starlette.responses import JSONResponse
 import tool.tool_factory as tool_factory
 import tool.get_clarity_context as get_clarity_context
 import tool.generate_clarity_code as generate_clarity_code
 import uvicorn
 
 logger = logging.getLogger(__name__)
+logging.getLogger("mcp.server.streamable_http").setLevel(logging.WARNING)
 
+class _SuppressClosedResourceError(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        msg = record.getMessage()
+        return "ClosedResourceError" not in msg
 
-class CustomHeaderMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        key = request.headers.get("API_KEY")
-        if not key:
-            return JSONResponse({"error": "Missing API key"}, status_code=401)
-
-        valid, user_id, message = database.validate_api_key(key)
-
-        if not valid:
-            return JSONResponse({"error": "Unauthorized"}, status_code=401)
-
-        return await call_next(request)
+logging.getLogger("mcp.server.streamable_http").addFilter(_SuppressClosedResourceError())
 
 
 @click.command()
@@ -145,9 +136,7 @@ def main(
             finally:
                 logger.info("Application shutting down...")
 
-    middlewares = [
-        Middleware(CustomHeaderMiddleware),
-    ]
+    middlewares = []
     starlette_app = Starlette(
         debug=True,
         routes=[

@@ -1,7 +1,7 @@
 import os
 import requests
 from typing import Any, Dict, Tuple, Optional
-from inference_base import BaseInferenceStrategy
+from rag.inference_base import BaseInferenceStrategy
 from dotenv import load_dotenv
 
 # Load environment variables
