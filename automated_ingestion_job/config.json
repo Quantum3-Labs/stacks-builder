@@ -10,8 +10,18 @@
     "user": null
   },
   "git": {
-    "clone_timeout": 300,
+    "clone_timeout": 600,
     "retry_attempts": 3
+  },
+  "timeouts": {
+    "clone": 600,
+    "ingest": 3600
+  },
+  "steps": {
+    "skip_clone_repos": false,
+    "skip_clone_docs": false,
+    "skip_ingest_samples": false,
+    "skip_ingest_docs": false
   }
 }
 

@@ -41,7 +41,7 @@ for url in tqdm(repo_urls, desc="Processing Repositories", unit="repo"):
 
     # Try cloning
     try:
-        subprocess.run(["git", "clone", url, repo_path], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(["git", "clone", "--depth", "1", url, repo_path], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except subprocess.CalledProcessError:
         tqdm.write(f"X Failed to clone {url}")
         continue  # Skip to next repository

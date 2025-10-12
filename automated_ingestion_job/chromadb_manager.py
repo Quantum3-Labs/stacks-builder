@@ -6,6 +6,7 @@ import os
 import shutil
 import json
 from pathlib import Path
+import stat
 
 
 class ChromaDBManager:
@@ -48,7 +49,15 @@ class ChromaDBManager:
         try:
             if self.chromadb_path.exists():
                 print(f"Deleting ChromaDB directory: {self.chromadb_path}")
-                shutil.rmtree(self.chromadb_path)
+
+                def on_rm_error(func, p, exc_info):
+                    try:
+                        os.chmod(p, stat.S_IWRITE)
+                        func(p)
+                    except Exception:
+                        pass
+
+                shutil.rmtree(self.chromadb_path, onerror=on_rm_error)
                 print("ChromaDB directory deleted successfully")
                 return True
             else:

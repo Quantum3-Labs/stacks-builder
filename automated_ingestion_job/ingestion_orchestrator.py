@@ -48,7 +48,7 @@ class IngestionOrchestrator:
         except json.JSONDecodeError:
             raise ValueError(f"Invalid JSON in configuration file: {config_path}")
 
-    def _run_script(self, script_path: Path, description: str) -> bool:
+    def _run_script(self, script_path: Path, description: str, timeout: int) -> bool:
         """
         Run a Python script and handle the result.
 
@@ -71,7 +71,7 @@ class IngestionOrchestrator:
                 cwd=str(self.project_root),
                 capture_output=True,
                 text=True,
-                timeout=self.config.get("git", {}).get("clone_timeout", 300),
+                timeout=timeout,
             )
 
             if result.returncode == 0:
@@ -108,24 +108,40 @@ class IngestionOrchestrator:
             return False
 
         # Step 2: Clone Clarity repositories
-        if not self._run_script(self.clone_repos_script, "Clarity repositories cloning"):
-            print("ERROR: Failed to clone Clarity repositories")
-            return False
+        if not self.config.get("steps", {}).get("skip_clone_repos", False):
+            clone_timeout = self.config.get("timeouts", {}).get("clone", 600)
+            if not self._run_script(self.clone_repos_script, "Clarity repositories cloning", clone_timeout):
+                print("ERROR: Failed to clone Clarity repositories")
+                return False
+        else:
+            print("Skipping repositories cloning (config)")
 
         # Step 3: Clone Clarity documentation
-        if not self._run_script(self.clone_docs_script, "Clarity documentation cloning"):
-            print("ERROR: Failed to clone Clarity documentation")
-            return False
+        if not self.config.get("steps", {}).get("skip_clone_docs", False):
+            clone_timeout = self.config.get("timeouts", {}).get("clone", 600)
+            if not self._run_script(self.clone_docs_script, "Clarity documentation cloning", clone_timeout):
+                print("ERROR: Failed to clone Clarity documentation")
+                return False
+        else:
+            print("Skipping documentation cloning (config)")
 
         # Step 4: Ingest code samples
-        if not self._run_script(self.ingest_samples_script, "Code samples ingestion"):
-            print("ERROR: Failed to ingest code samples")
-            return False
+        if not self.config.get("steps", {}).get("skip_ingest_samples", False):
+            ingest_timeout = self.config.get("timeouts", {}).get("ingest", 3600)
+            if not self._run_script(self.ingest_samples_script, "Code samples ingestion", ingest_timeout):
+                print("ERROR: Failed to ingest code samples")
+                return False
+        else:
+            print("Skipping code samples ingestion (config)")
 
         # Step 5: Ingest documentation
-        if not self._run_script(self.ingest_docs_script, "Documentation ingestion"):
-            print("ERROR: Failed to ingest documentation")
-            return False
+        if not self.config.get("steps", {}).get("skip_ingest_docs", False):
+            ingest_timeout = self.config.get("timeouts", {}).get("ingest", 3600)
+            if not self._run_script(self.ingest_docs_script, "Documentation ingestion", ingest_timeout):
+                print("ERROR: Failed to ingest documentation")
+                return False
+        else:
+            print("Skipping documentation ingestion (config)")
 
         return True
 

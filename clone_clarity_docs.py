@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+import stat
 
 # Configuration
 DOC_REPO_URL = "https://github.com/clarity-lang/book.git"
@@ -37,6 +38,25 @@ def count_doc_files(directory):
                 count += 1
     return count
 
+def safe_rmtree(path: str):
+    """Remove directory tree on all platforms, handling read-only files on Windows."""
+    if not os.path.exists(path):
+        return True
+
+    def on_rm_error(func, p, exc_info):
+        try:
+            os.chmod(p, stat.S_IWRITE)
+            func(p)
+        except Exception:
+            pass
+
+    try:
+        shutil.rmtree(path, onerror=on_rm_error)
+        return True
+    except Exception as e:
+        print(f"Warning: Failed to remove {path}: {e}")
+        return False
+
 def main():
     print("Cloning Clarity Official Documentation")
     print("=" * 52)
@@ -44,11 +64,14 @@ def main():
     # Clean up existing directories
     if os.path.exists(TEMP_CLONE_DIR):
         print(f"Removing existing temp directory: {TEMP_CLONE_DIR}")
-        shutil.rmtree(TEMP_CLONE_DIR)
+        if not safe_rmtree(TEMP_CLONE_DIR):
+            print(f"Failed to remove {TEMP_CLONE_DIR}, continuing and will overwrite")
     
     if os.path.exists(TARGET_DIR):
         print(f"Removing existing docs directory: {TARGET_DIR}")
-        shutil.rmtree(TARGET_DIR)
+        if not safe_rmtree(TARGET_DIR):
+            print(f"Failed to remove {TARGET_DIR}, aborting")
+            return 1
     
     # Clone the repository
     print("Cloning Clarity repository...")
@@ -88,14 +111,10 @@ def main():
     
     # Clean up temp directory
     print(f"Cleaning up temp directory: {TEMP_CLONE_DIR}")
-    try:
-        shutil.rmtree(TEMP_CLONE_DIR)
-        if not os.path.exists(TEMP_CLONE_DIR):
-            print("Temp directory cleaned up successfully")
-        else:
-            print("Warning: Failed to remove temp directory")
-    except Exception as e:
-        print(f"Warning: Failed to remove temp directory: {e}")
+    if safe_rmtree(TEMP_CLONE_DIR):
+        print("Temp directory cleaned up successfully")
+    else:
+        print("Warning: Failed to remove temp directory")
     
     print("\nDocumentation cloning completed successfully!")
     return 0
