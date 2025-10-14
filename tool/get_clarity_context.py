@@ -8,26 +8,29 @@ from tool import tool_factory
 class GetClarityContext(tool_factory.ToolFactory):
     def action(self, arguments: dict[str, Any]) -> list[types.ContentBlock]:
         query = arguments.get("query")
+        code_results = int(arguments.get("code_results", 5))
+        docs_results = int(arguments.get("docs_results", 5))
+
         gemini_strategy = gemini.GeminiStrategy()
         context = base.InferenceContext(gemini_strategy)
-        retrieved_data = context.retrieve_context(query)
 
-        if retrieved_data["doc_docs"]:
-            doc_results = list(
-                zip(
-                    retrieved_data["doc_docs"],
-                    retrieved_data["doc_metas"],
-                    retrieved_data["doc_distances"],
-                )
-            )
-            doc_results.sort(key=lambda x: x[2])  # Sort by distance
+        # Retrieve from BOTH collections (code + docs)
+        retrieved_data = context.retrieve_context(
+            query, code_results=code_results, docs_results=docs_results
+        )
+
+        # Generate answer using the retrieved context
+        if getattr(gemini_strategy, "use_sdk", False) and getattr(
+            gemini, "GEMINI_SDK_AVAILABLE", False
+        ):
+            answer, _ = gemini_strategy.answer_with_gemini_sdk(query, retrieved_data)
         else:
-            doc_results = []
+            answer, _ = gemini_strategy.answer_with_gemini_rest(query, retrieved_data)
 
         return [
             types.TextContent(
                 type="text",
-                text=(f"{doc_results[:5]}"),
+                text=answer,
             )
         ]
 
