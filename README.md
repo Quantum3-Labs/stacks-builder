@@ -1,6 +1,6 @@
-# Clarity Builder
+# Stacks Builder
 
-Clarity Builder is an MCP-enabled RAG system that enhances Clarity smart contract coding for Cursor/VS Code. It ingests official Clarity docs and sample projects into ChromaDB, retrieves the most relevant context, and uses Gemini to produce accurate answers and code.
+Stacks Builder is an MCP-enabled RAG system that enhances Clarity smart contract coding for Cursor/VS Code. It ingests official Clarity docs and sample projects into ChromaDB, retrieves the most relevant context, and uses Gemini to produce accurate answers and code.
 
 ## RAG Pipeline
 
