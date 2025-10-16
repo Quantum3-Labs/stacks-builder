@@ -1,0 +1,18 @@
+[project]
+name = "blank-project"
+description = "Create a project from scratch: Start from a blank scaffold for your next Clarity contract"
+authors = []
+telemetry = true
+cache_dir = "./.cache"
+
+# [contracts.CHANGE-THIS-TO-YOUR-CONTRACT-NAME]
+# path = "contracts/CHANGE-THIS-TO-YOUR-CONTRACT-NAME.clar"
+
+[repl.analysis]
+passes = ["check_checker"]
+
+[repl.analysis.check_checker]
+strict = false
+trusted_sender = false
+trusted_caller = false
+callee_filter = false
