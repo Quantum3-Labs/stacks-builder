@@ -4,7 +4,8 @@ Stacks Builder is an MCP-enabled RAG system that enhances Clarity smart contract
 
 ## RAG Pipeline
 
-<img width="3978" height="3612" alt="Clarity_RAG" src="https://github.com/user-attachments/assets/717b3721-49cc-4042-b2e5-cba625f5f84f" />
+
+<img width="4005" height="3612" alt="Clarity_RAG" src="https://github.com/user-attachments/assets/327f266b-e28b-4b28-8c92-12a7952475ab" />
 
 
 ## Architecture
