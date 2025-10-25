@@ -30,7 +30,7 @@ REPO_URLS = [
     "https://github.com/erfanyeganegi/droplinked-stacks-contract.git",
     "https://github.com/FLATLAY/droplinked-stacks-contract.git",
     "https://github.com/friedger/clarity-stacking-pools.git",
-    "https://github.com/boomcrypto/clarity-deployed-contracts.git",
+    # "https://github.com/boomcrypto/clarity-deployed-contracts.git",
     # "https://github.com/friedger/clarity-dao.git",
     # "https://github.com/psq/swapr.git",
     # "https://github.com/psq/flexr.git",
