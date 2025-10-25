@@ -1,0 +1,20 @@
+[project]
+name = "clarity-bitcoin"
+description = "Demonstrates how to parse Bitcoin transactions and block headers, and to verify Bitcoin transactions"
+authors = []
+telemetry = true
+cache_dir = "./.cache"
+
+[contracts.clarity-bitcoin]
+path = "contracts/clarity-bitcoin.clar"
+clarity_version = 3
+epoch = 3.0
+
+[repl.analysis]
+passes = ["check_checker"]
+
+[repl.analysis.check_checker]
+strict = false
+trusted_sender = false
+trusted_caller = false
+callee_filter = false

@@ -1,0 +1,11 @@
+[project]
+name = "stx-defi"
+description = "Decentralized Finance (DeFi) Loans using STX"
+authors = []
+telemetry = true
+cache_dir = "./.cache"
+
+[contracts.stx-defi]
+path = "contracts/stx-defi.clar"
+clarity_version = 3
+epoch = 3.0
