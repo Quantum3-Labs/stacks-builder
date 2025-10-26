@@ -22,7 +22,7 @@ Visit our Swagger UI to register and generate your API key:
 1. Open: **<https://stacks-builder.q3labs.io/swagger/index.html>**
 2. Register via `/api/v1/auth/register` endpoint
 3. Login via `/api/v1/auth/login` endpoint  
-4. Generate your API key from `/api/v1/keys` endpoint
+4. Generate your API key from **Post `/api/v1/keys` Create API key** endpoint
 5. **Save your API key** - you'll need it in the next step
 
 ### Step 2: Configure MCP Server in Cursor
@@ -49,7 +49,7 @@ Add this configuration to your Cursor MCP settings file (`~/.cursor/mcp.json`):
 
 Replace `your-api-key-here` with the API key from Step 1.
 
-### Step 3: Restart Cursor
+### Step 3: Restart Cursor (if needed)
 
 **Completely restart Cursor** (not just reload) for the changes to take effect.
 
@@ -65,11 +65,22 @@ Once configured, you'll have access to:
    - AI-powered code generation using RAG context
    - Supports custom temperature and token limits
 
-**Example queries:**
+**Example simple queries:**
 
 - "How do I create a data variable in Clarity?"
-- "Generate a contract for user profile management with CRUD operations"
 - "Show me examples of using maps in Clarity"
+
+**Example advanced queries:**
+  
+"Create a Clarity project using Clarinet tool to build the following:
+  Create a token with name CQT. Should transfer, mint (only the owner can mint)
+
+Rules:
+- Must meet all requirements above
+- Handle any possible errors
+- Adhere to the clarinet/stacks documentation for best practice/syntax
+- Can apply the changes in this current project 
+Use stacks-builder MCP server to help you with development"
 
 ## 🔧 Troubleshooting
 
