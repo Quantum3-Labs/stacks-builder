@@ -216,7 +216,54 @@ make up
 
 The backend will be available at `http://localhost:8080`.
 
-#### 2. Generate API Key
+#### 2. Data Ingestion Setup
+
+To populate the RAG system with Clarity documentation and code samples, you need to ingest the data into ChromaDB. This step is essential for the system to provide relevant context.
+
+**Setup virtual environment and ingest data:**
+
+```bash
+# Navigate to backend directory
+cd backend
+
+# Create Python virtual environment
+make venv
+
+# Activate the virtual environment
+source venv/bin/activate
+
+# Install all dependencies (Python + Go)
+make install
+
+# Clone repositories and ingest data into ChromaDB
+make setup
+```
+
+**Optional: Add custom repositories**
+
+If you want to include additional Clarity repositories in your knowledge base, you can add them to the repository list before running setup:
+
+1. Edit `backend/scripts/clone_repos.py`
+2. Add your repository URLs to the `REPO_URLS` list:
+
+```python
+REPO_URLS = [
+    # ... existing repositories ...
+    "https://github.com/your-username/your-clarity-repo.git",
+    "https://github.com/another-org/clarity-project.git",
+]
+```
+
+3. Then run the setup process as normal with `make setup`
+
+This process will:
+1. Create a Python virtual environment
+2. Install Python dependencies for data processing
+3. Install Go dependencies for the backend
+4. Clone official Clarity documentation and 15+ sample repositories
+5. Process and embed all content into ChromaDB for vector search
+
+#### 3. Generate API Key
 
 Once the backend is running:
 
@@ -225,7 +272,7 @@ Once the backend is running:
 3. Login via `/api/v1/auth/login`
 4. Generate your API key from `/api/v1/keys`
 
-#### 3. Configure MCP Server
+#### 4. Configure MCP Server
 
 Update your `~/.cursor/mcp.json` to point to your local backend:
 
