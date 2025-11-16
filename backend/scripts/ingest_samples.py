@@ -26,6 +26,7 @@ except ImportError as e:
 # Get paths
 BACKEND_DIR = Path(__file__).parent.parent
 SAMPLES_DIR = BACKEND_DIR / "data" / "clarity_code_samples"
+MAX_FILES = 30000 # Maximum number of files to ingest to get best performance
 
 
 def get_chromadb_path():
@@ -97,6 +98,7 @@ def find_project_files(samples_dir):
 
 def ingest_samples():
     """Main ingestion function with progress reporting"""
+    remain_files = MAX_FILES 
     # Check if samples directory exists
     if not SAMPLES_DIR.exists():
         print(json.dumps({
@@ -143,6 +145,10 @@ def ingest_samples():
     # Process .clar files first
     print(json.dumps({"type": "info", "message": "Processing .clar files..."}), flush=True)
     for file_path in clar_files:
+        if remain_files <= 0:
+            print("Reached maximum file limit for ingestion.", flush=True)
+            break
+        remain_files -= 1
         current += 1
 
         try:
@@ -183,6 +189,10 @@ def ingest_samples():
     # Process Clarinet.toml files
     print(json.dumps({"type": "info", "message": "Processing Clarinet.toml files..."}), flush=True)
     for file_path in clarinet_toml_files:
+        if remain_files <= 0:
+            print("Reached maximum file limit for ingestion.", flush=True)
+            break
+        remain_files -= 1
         current += 1
 
         try:
