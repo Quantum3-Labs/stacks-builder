@@ -49,7 +49,26 @@ Add this configuration to your Cursor MCP settings file (`~/.cursor/mcp.json`):
 
 Replace `your-api-key-here` with the API key from Step 1.
 
-### Step 3: Restart Cursor (if needed)
+### Step 3: Add Stacks Development Rule
+
+Go to **Cursor Settings** → **Rules, Memories, Commands** and create a new **User Rules** so it applies across all your projects:
+
+```
+Stacks Coding Rules
+
+These rules define how Stacks and Clarity development should be handled across projects. All Stacks- or Clarity-related requests must begin with a call to the Stacks Builder MCP.
+
+Use the MCP tools in this order:
+1. get_clarity_context – retrieve context, analyze existing code, and understand behavior.
+2. generate_clarity_code – create or modify code.
+
+Each MCP query must be atomic and focus on a single topic. If a request involves multiple topics, make separate MCP calls.
+
+All answers must rely on MCP output without assumptions or speculation.
+```
+
+
+### Step 4: Restart Cursor (if needed)
 
 **Completely restart Cursor** (not just reload) for the changes to take effect.
 
@@ -291,6 +310,24 @@ Update your `~/.cursor/mcp.json` to point to your local backend:
 }
 ```
 
+### 5. Add Stacks Development Rule
+
+Go to **Cursor Settings** → **Rules, Memories, Commands** and create a new **User Rules** so it applies across all your projects:
+
+```
+Stacks Coding Rules
+
+These rules define how Stacks and Clarity development should be handled across projects. All Stacks- or Clarity-related requests must begin with a call to the Stacks Builder MCP.
+
+Use the MCP tools in this order:
+1. get_clarity_context – retrieve context, analyze existing code, and understand behavior.
+2. generate_clarity_code – create or modify code.
+
+Each MCP query must be atomic and focus on a single topic. If a request involves multiple topics, make separate MCP calls.
+
+All answers must rely on MCP output without assumptions or speculation.
+```
+
 Restart Cursor completely.
 
 ### Development Mode
@@ -389,43 +426,6 @@ curl -X POST http://localhost:8080/v1/chat/completions \
 ## 🔗 Integrations
 
 Stacks Builder can be integrated with various Clarity development tools and templates to enhance your smart contract development workflow with RAG-powered context.
-
-## 📁 Project Structure
-
-```
-stacks-builder/
-├── backend/                        # Go backend server
-│   ├── cmd/
-│   │   └── server/
-│   │       └── main.go            # Main entry point
-│   ├── internal/
-│   │   ├── api/
-│   │   │   ├── handlers/          # HTTP request handlers
-│   │   │   ├── middleware/        # CORS, auth middleware
-│   │   │   └── router.go          # API routing
-│   │   ├── auth/                  # Authentication service
-│   │   ├── codegen/               # Code generation with LLM providers
-│   │   ├── database/              # Database connection & queries
-│   │   └── rag/                   # RAG service & Python client
-│   ├── scripts/                   # Python ingestion scripts
-│   ├── docs/                      # Swagger API documentation
-│   ├── Dockerfile
-│   ├── docker-compose.yml
-│   ├── Makefile
-│   ├── go.mod
-│   └── requirements.txt           # Python dependencies
-├── mcp_server/                    # MCP (Model Context Protocol) server
-│   ├── src/
-│   │   ├── tools/
-│   │   │   ├── generate-clarity-code.tool.ts
-│   │   │   └── get-clarity-context.tool.ts
-│   │   └── index.ts              # MCP server entry point
-│   ├── package.json              # Published as @q3labs/stacks-builder
-│   └── tsconfig.json
-├── RAG_PIPELINE_DIAGRAM.md
-├── RAG_APPROACH_DIAGRAM.md
-└── README.md
-```
 
 ## 📚 Documentation
 
