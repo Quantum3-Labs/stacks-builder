@@ -68,11 +68,13 @@ All answers must rely on MCP output without assumptions or speculation.
 ```
 
 
-### Step 4: Restart Cursor (if needed)
+### Step 4: Restart Cursor and video demo 
 
-**Completely restart Cursor** (not just reload) for the changes to take effect.
+**Completely restart Cursor** (not just reload) for the changes to take effect if needed.
 
-### Available MCP Tools
+[Video demo](https://app.screencastify.com/watch/eNXDjW1mefKQl7OiHGUs?checkOrg=820e9886-a903-47de-9d49-ad7fee794c97) showing setup process from step 1 to 3.
+
+## Available MCP Tools
 
 Once configured, you'll have access to:
 
