@@ -12,6 +12,12 @@ const (
 	ProviderClaude = "claude"
 )
 
+// CodeGenerationResponse represents a code generation response
+type CodeGenerationResponse struct {
+	Code        string `json:"code"`
+	Explanation string `json:"explanation"`
+}
+
 // Service describes a generic code generation provider.
 type Service interface {
 	GenerateCode(ctx context.Context, query string, codeContexts []string, docContexts []string, temperature float64, maxTokens int) (*CodeGenerationResponse, error)

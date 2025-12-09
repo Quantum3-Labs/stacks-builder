@@ -15,6 +15,7 @@ const (
 	defaultOpenAIModel         = "gpt-3.5-turbo"
 	defaultOpenAIEndpoint      = "https://api.openai.com/v1/chat/completions"
 	defaultOpenAISystemMessage = "You are a Clarity expert."
+	defaultOpenAIMaxTokens     = 4096
 )
 
 // OpenAIService handles code generation using OpenAI chat completions API.
@@ -94,7 +95,7 @@ func (s *OpenAIService) GenerateCode(ctx context.Context, query string, codeCont
 		temperature = 0.7
 	}
 	if maxTokens == 0 {
-		maxTokens = 512
+		maxTokens = defaultOpenAIMaxTokens
 	}
 
 	prompt := buildCodeGenerationInstruction(query, codeContexts, docContexts)
