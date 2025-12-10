@@ -16,7 +16,7 @@ const (
 	defaultClaudeEndpoint      = "https://api.anthropic.com/v1/messages"
 	defaultClaudeAPIVersion    = "2023-06-01"
 	defaultClaudeSystemMessage = "You are an expert Clarity programmer."
-	defaultClaudeMaxTokens     = 512
+	defaultClaudeMaxTokens     = 4096
 	defaultClaudeTemperature   = 0.7
 )
 
