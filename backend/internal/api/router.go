@@ -10,12 +10,13 @@ import (
 	"github.com/Quantum3-Labs/stacks-builder/backend/internal/api/handlers"
 	"github.com/Quantum3-Labs/stacks-builder/backend/internal/api/middleware"
 	"github.com/Quantum3-Labs/stacks-builder/backend/internal/auth"
+	"github.com/Quantum3-Labs/stacks-builder/backend/internal/querylog"
 
 	_ "github.com/Quantum3-Labs/stacks-builder/backend/docs" // Import generated docs
 )
 
 // SetupRoutes configures all API routes
-func SetupRoutes(router *gin.Engine, db *sql.DB) {
+func SetupRoutes(router *gin.Engine, db *sql.DB, qlRepo *querylog.Repository, qlService *querylog.Service) {
 	// Swagger documentation
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -32,7 +33,6 @@ func SetupRoutes(router *gin.Engine, db *sql.DB) {
 		// Authentication routes (public register/login)
 		authGroup := v1.Group("/auth")
 		{
-			
 			authGroup.POST("/register", handlers.Register(db))
 			authGroup.POST("/login", handlers.Login(db))
 		}
@@ -57,9 +57,21 @@ func SetupRoutes(router *gin.Engine, db *sql.DB) {
 			ingest.POST("/jobs/:id/cancel", handlers.CancelIngestionJob(db))
 		}
 
+		// Admin query log endpoints (Basic Auth + admin role)
+		admin := v1.Group("/admin")
+		admin.Use(middleware.BasicAuth(db), middleware.RequireRole(auth.RoleAdmin))
+		{
+			admin.GET("/query-logs", handlers.ListQueryLogs(qlRepo))
+			admin.GET("/query-logs/stats", handlers.GetQueryLogStats(qlRepo))  // Must come before /:id
+			admin.GET("/query-logs/:id", handlers.GetQueryLog(qlRepo))
+		}
+
 		// RAG routes (API Key Auth)
 		rag := v1.Group("/rag")
-		rag.Use(middleware.APIKeyAuth(db))
+		rag.Use(
+			middleware.APIKeyAuth(db),
+			middleware.QueryLogMiddleware(qlService, []string{"/api/v1/rag/retrieve", "/api/v1/rag/generate"}),
+		)
 		{
 			rag.POST("/retrieve", handlers.RetrieveContext(db))
 			rag.POST("/generate", handlers.GenerateCode(db))
@@ -67,5 +79,10 @@ func SetupRoutes(router *gin.Engine, db *sql.DB) {
 	}
 
 	// OpenAI-compatible chat completions endpoint (API Key Auth)
-	router.POST("/v1/chat/completions", middleware.APIKeyAuth(db), handlers.ChatCompletions(db))
+	router.POST(
+		"/v1/chat/completions",
+		middleware.APIKeyAuth(db),
+		middleware.QueryLogMiddleware(qlService, []string{"/v1/chat/completions"}),
+		handlers.ChatCompletions(db),
+	)
 }
