@@ -10,6 +10,7 @@ import (
 	"github.com/Quantum3-Labs/stacks-builder/backend/internal/api"
 	"github.com/Quantum3-Labs/stacks-builder/backend/internal/api/middleware"
 	"github.com/Quantum3-Labs/stacks-builder/backend/internal/database"
+	"github.com/Quantum3-Labs/stacks-builder/backend/internal/querylog"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -197,6 +198,10 @@ func main() {
 	}
 	defer db.Close()
 
+	// Initialize query logging service
+	qr := querylog.NewRepository(db)
+	qs := querylog.NewService(qr)
+
 	// Set Gin mode
 	if os.Getenv("GIN_MODE") == "" {
 		gin.SetMode(gin.DebugMode)
@@ -207,7 +212,7 @@ func main() {
 	router.Use(middleware.MaintenanceModeMiddleware())
 
 	// Setup routes
-	api.SetupRoutes(router, db)
+	api.SetupRoutes(router, db, qr, qs)
 
 	// Get port from environment or use default
 	port := os.Getenv("PORT")

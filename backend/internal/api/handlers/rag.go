@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/Quantum3-Labs/stacks-builder/backend/internal/api/middleware"
 	"github.com/Quantum3-Labs/stacks-builder/backend/internal/codegen"
 	"github.com/Quantum3-Labs/stacks-builder/backend/internal/rag"
 	"github.com/gin-gonic/gin"
@@ -113,7 +114,7 @@ func RetrieveContext(db *sql.DB) gin.HandlerFunc {
 		}
 
 		var formatted strings.Builder
-		
+
 		if len(response.CodeContexts) > 0 {
 			formatted.WriteString("## Code Contexts:\n\n")
 			for i, context := range response.CodeContexts {
@@ -130,6 +131,7 @@ func RetrieveContext(db *sql.DB) gin.HandlerFunc {
 
 		formattedContext := formatted.String()
 		response.FormattedContext = formattedContext
+		c.Set(middleware.QueryLogRAGContextsCount, len(response.CodeContexts)+len(response.DocsContexts))
 
 		c.JSON(http.StatusOK, gin.H{
 			"formatted_context": formattedContext,
@@ -168,7 +170,13 @@ func GenerateCode(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		ragContextsCount := len(ragResponse.CodeContexts) + len(ragResponse.DocsContexts)
+
 		provider := codegen.ProviderFromEnv()
+
+		c.Set(middleware.QueryLogModelProvider, provider)
+		c.Set(middleware.QueryLogRAGContextsCount, ragContextsCount)
+
 		codegenService, err := getCodegenService(provider)
 		if err != nil {
 			log.Printf("Failed to initialize %s service: %v", provider, err)

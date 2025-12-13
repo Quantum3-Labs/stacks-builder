@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"github.com/Quantum3-Labs/stacks-builder/backend/internal/api/middleware"
 	"github.com/Quantum3-Labs/stacks-builder/backend/internal/codegen"
 	"github.com/Quantum3-Labs/stacks-builder/backend/internal/conversation"
 )
@@ -137,7 +138,11 @@ func ChatCompletions(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		ragContextsCount := len(ragResponse.CodeContexts) + len(ragResponse.DocsContexts)
+
 		provider := codegen.ProviderFromEnv()
+		c.Set(middleware.QueryLogModelProvider, provider)
+		c.Set(middleware.QueryLogRAGContextsCount, ragContextsCount)
 		codegenService, err := getCodegenService(provider)
 		if err != nil {
 			log.Printf("Failed to initialize %s service: %v", provider, err)
@@ -173,6 +178,11 @@ func ChatCompletions(db *sql.DB) gin.HandlerFunc {
 		convo.AddTurn("user", query)
 		convo.AddTurn("assistant", assistantMessage)
 
+		promptTokens := estimateTokens(conversationAwareQuery)
+		completionTokens := estimateTokens(assistantMessage)
+		c.Set(middleware.QueryLogInputTokens, promptTokens)
+		c.Set(middleware.QueryLogOutputTokens, completionTokens)
+
 		// Create OpenAI-compatible response
 		response := ChatCompletionResponse{
 			ID:      "chatcmpl-" + uuid.New().String(),
@@ -190,9 +200,9 @@ func ChatCompletions(db *sql.DB) gin.HandlerFunc {
 				},
 			},
 			Usage: ChatCompletionUsage{
-				PromptTokens:     estimateTokens(conversationAwareQuery),
-				CompletionTokens: estimateTokens(assistantMessage),
-				TotalTokens:      estimateTokens(conversationAwareQuery) + estimateTokens(assistantMessage),
+				PromptTokens:     promptTokens,
+				CompletionTokens: completionTokens,
+				TotalTokens:      promptTokens + completionTokens,
 			},
 		}
 
@@ -205,6 +215,7 @@ func ChatCompletions(db *sql.DB) gin.HandlerFunc {
 		}
 
 		response.ConversationID = convo.ID
+		c.Set(middleware.QueryLogConversationID, convo.ID)
 
 		c.JSON(http.StatusOK, response)
 	}
