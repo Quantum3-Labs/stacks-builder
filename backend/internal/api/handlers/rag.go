@@ -203,6 +203,10 @@ func GenerateCode(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, response)
+	// Log token usage for analytics
+	c.Set(middleware.QueryLogInputTokens, response.InputTokens)
+	c.Set(middleware.QueryLogOutputTokens, response.OutputTokens)
+
+	c.JSON(http.StatusOK, response)
 	}
 }

@@ -178,10 +178,9 @@ func ChatCompletions(db *sql.DB) gin.HandlerFunc {
 		convo.AddTurn("user", query)
 		convo.AddTurn("assistant", assistantMessage)
 
-		promptTokens := estimateTokens(conversationAwareQuery)
-		completionTokens := estimateTokens(assistantMessage)
-		c.Set(middleware.QueryLogInputTokens, promptTokens)
-		c.Set(middleware.QueryLogOutputTokens, completionTokens)
+		// Use real token counts from codegen response
+		c.Set(middleware.QueryLogInputTokens, codeGenResponse.InputTokens)
+		c.Set(middleware.QueryLogOutputTokens, codeGenResponse.OutputTokens)
 
 		// Create OpenAI-compatible response
 		response := ChatCompletionResponse{
@@ -200,9 +199,9 @@ func ChatCompletions(db *sql.DB) gin.HandlerFunc {
 				},
 			},
 			Usage: ChatCompletionUsage{
-				PromptTokens:     promptTokens,
-				CompletionTokens: completionTokens,
-				TotalTokens:      promptTokens + completionTokens,
+				PromptTokens:     codeGenResponse.InputTokens,
+				CompletionTokens: codeGenResponse.OutputTokens,
+				TotalTokens:      codeGenResponse.InputTokens + codeGenResponse.OutputTokens,
 			},
 		}
 
@@ -219,12 +218,6 @@ func ChatCompletions(db *sql.DB) gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, response)
 	}
-}
-
-// estimateTokens provides a rough estimate of token count
-func estimateTokens(text string) int {
-	// Rough estimation: ~4 characters per token
-	return len(text) / 4
 }
 
 func extractUserID(c *gin.Context) (int, bool) {
