@@ -415,7 +415,7 @@ curl -X POST http://localhost:8080/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{
-    "model": "gemini-2.0-flash-exp",
+    "model": "gemini-2.5-flash",
     "messages": [
       {"role": "user", "content": "How do I write a counter contract in Clarity?"}
     ],
