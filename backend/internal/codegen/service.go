@@ -14,8 +14,10 @@ const (
 
 // CodeGenerationResponse represents a code generation response
 type CodeGenerationResponse struct {
-	Code        string `json:"code"`
-	Explanation string `json:"explanation"`
+	Code         string `json:"code"`
+	Explanation  string `json:"explanation"`
+	InputTokens  int    `json:"input_tokens"`
+	OutputTokens int    `json:"output_tokens"`
 }
 
 // Service describes a generic code generation provider.

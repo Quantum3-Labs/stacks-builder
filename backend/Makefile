@@ -128,14 +128,14 @@ docker-clean:
 .PHONY: dev-build
 dev-build:
 	@echo "Building development Docker image..."
-	docker compose -f docker-compose.dev.yml build
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml build
 
 .PHONY: dev-up
 dev-up:
-	@echo "Starting development containers with live reload..."
-	docker compose -f docker-compose.dev.yml up -d
+	@echo "Starting development containers with bind mount..."
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 	@echo "Development backend is running at http://localhost:8080"
-	@echo "Live reload enabled - code changes will trigger automatic rebuilds"
+	@echo "Database visible at ./data/clarity_coder.db"
 
 .PHONY: dev
 dev:
@@ -145,27 +145,27 @@ dev:
 .PHONY: dev-down
 dev-down:
 	@echo "Stopping development containers..."
-	docker compose -f docker-compose.dev.yml down
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml down
 
 .PHONY: dev-logs
 dev-logs:
 	@echo "Viewing development logs (Ctrl+C to exit)..."
-	docker compose -f docker-compose.dev.yml logs -f
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f
 
 .PHONY: dev-restart
 dev-restart:
 	@echo "Restarting development containers..."
-	docker compose -f docker-compose.dev.yml restart
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml restart
 
 .PHONY: dev-rebuild
 dev-rebuild:
 	@echo "Rebuilding and restarting development containers..."
-	docker compose -f docker-compose.dev.yml up -d --build
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
 .PHONY: dev-clean
 dev-clean:
 	@echo "Stopping and removing development containers and volumes..."
-	docker compose -f docker-compose.dev.yml down -v
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v
 	@echo "Development cleanup complete."
 
 .PHONY: help

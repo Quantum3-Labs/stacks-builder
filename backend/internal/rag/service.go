@@ -26,7 +26,7 @@ func NewServiceFromEnv() (*Service, error) {
 		scriptPath = "./scripts/rag_retriever.py"
 	}
 
-	pythonClient := NewPythonClient(scriptPath, 30*time.Second)
+	pythonClient := NewPythonClient(scriptPath, 60*time.Second)
 
 	return NewService(pythonClient), nil
 }

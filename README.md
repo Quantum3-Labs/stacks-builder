@@ -425,6 +425,62 @@ curl -X POST http://localhost:8080/v1/chat/completions \
   }'
 ```
 
+---
+
+## 🗄️ Database Configuration
+
+The backend uses SQLite for user management, API keys, job tracking, and query analytics.
+
+### DATABASE_PATH Environment Variable
+
+- **Default**: `./data/clarity_coder.db`
+- **Production/Docker**: `/app/data/clarity_coder.db`
+- **Local Development**: `./data/clarity_coder.db`
+
+Configure in your `.env` file:
+
+```bash
+DATABASE_PATH=./data/clarity_coder.db
+```
+
+The database file is automatically created on first run if it doesn't exist. All database tables and indices are created via automatic migrations.
+
+### Query Logs Schema
+
+The `query_logs` table tracks all API requests for analytics, debugging, and token usage monitoring.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | INTEGER | Primary key, auto-increment |
+| `user_id` | INTEGER | Foreign key to users table (required) |
+| `api_key_id` | INTEGER | Foreign key to api_keys table (nullable) |
+| `endpoint` | TEXT | API endpoint path (e.g., `/v1/chat/completions`) |
+| `query` | TEXT | Request payload (truncated to 10KB) |
+| `response` | TEXT | Response payload (truncated to 10KB) |
+| `model_provider` | TEXT | LLM provider used (`gemini`, `openai`, `claude`) |
+| `rag_contexts_count` | INTEGER | Number of RAG contexts retrieved (default: 0) |
+| `input_tokens` | INTEGER | Tokens in prompt/input (default: 0) |
+| `output_tokens` | INTEGER | Tokens in completion/output (default: 0) |
+| `latency_ms` | INTEGER | Request latency in milliseconds (default: 0) |
+| `status` | TEXT | Request status (`success` or `error`) |
+| `error_message` | TEXT | Error details if status is error (nullable) |
+| `conversation_id` | INTEGER | Foreign key to conversations table (nullable) |
+| `created_at` | TIMESTAMP | Record creation timestamp (default: CURRENT_TIMESTAMP) |
+
+**Indices:**
+- `idx_query_logs_user_id` - Index on user_id for faster user-specific queries
+- `idx_query_logs_created_at` - Index on created_at for time-based queries
+- `idx_query_logs_endpoint` - Index on endpoint for endpoint-specific analytics
+
+**Token Counting:**
+
+Token counts (`input_tokens`, `output_tokens`) are populated using native token counting APIs from each LLM provider:
+- **Gemini**: Uses `CountTokens()` method from the Google GenAI SDK
+- **OpenAI**: Extracted from response `usage.prompt_tokens` and `usage.completion_tokens`
+- **Claude**: Extracted from response `usage.input_tokens` and `usage.output_tokens`
+
+---
+
 ## 🔗 Integrations
 
 Stacks Builder can be integrated with various Clarity development tools and templates to enhance your smart contract development workflow with RAG-powered context.

@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"github.com/Quantum3-Labs/stacks-builder/backend/internal/api/middleware"
 	"github.com/Quantum3-Labs/stacks-builder/backend/internal/codegen"
 	"github.com/Quantum3-Labs/stacks-builder/backend/internal/conversation"
 )
@@ -137,7 +138,11 @@ func ChatCompletions(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		ragContextsCount := len(ragResponse.CodeContexts) + len(ragResponse.DocsContexts)
+
 		provider := codegen.ProviderFromEnv()
+		c.Set(middleware.QueryLogModelProvider, provider)
+		c.Set(middleware.QueryLogRAGContextsCount, ragContextsCount)
 		codegenService, err := getCodegenService(provider)
 		if err != nil {
 			log.Printf("Failed to initialize %s service: %v", provider, err)
@@ -173,6 +178,10 @@ func ChatCompletions(db *sql.DB) gin.HandlerFunc {
 		convo.AddTurn("user", query)
 		convo.AddTurn("assistant", assistantMessage)
 
+		// Use real token counts from codegen response
+		c.Set(middleware.QueryLogInputTokens, codeGenResponse.InputTokens)
+		c.Set(middleware.QueryLogOutputTokens, codeGenResponse.OutputTokens)
+
 		// Create OpenAI-compatible response
 		response := ChatCompletionResponse{
 			ID:      "chatcmpl-" + uuid.New().String(),
@@ -190,9 +199,9 @@ func ChatCompletions(db *sql.DB) gin.HandlerFunc {
 				},
 			},
 			Usage: ChatCompletionUsage{
-				PromptTokens:     estimateTokens(conversationAwareQuery),
-				CompletionTokens: estimateTokens(assistantMessage),
-				TotalTokens:      estimateTokens(conversationAwareQuery) + estimateTokens(assistantMessage),
+				PromptTokens:     codeGenResponse.InputTokens,
+				CompletionTokens: codeGenResponse.OutputTokens,
+				TotalTokens:      codeGenResponse.InputTokens + codeGenResponse.OutputTokens,
 			},
 		}
 
@@ -205,15 +214,10 @@ func ChatCompletions(db *sql.DB) gin.HandlerFunc {
 		}
 
 		response.ConversationID = convo.ID
+		c.Set(middleware.QueryLogConversationID, convo.ID)
 
 		c.JSON(http.StatusOK, response)
 	}
-}
-
-// estimateTokens provides a rough estimate of token count
-func estimateTokens(text string) int {
-	// Rough estimation: ~4 characters per token
-	return len(text) / 4
 }
 
 func extractUserID(c *gin.Context) (int, bool) {

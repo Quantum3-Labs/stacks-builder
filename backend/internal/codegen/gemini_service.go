@@ -3,6 +3,7 @@ package codegen
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -56,14 +57,37 @@ func (s *GeminiService) GenerateCode(ctx context.Context, query string, codeCont
 		maxTokens = defaultGeminiMaxTokens
 	}
 
+	// Count input tokens
+	inputTokenCount, err := s.countTokens(ctx, prompt)
+	if err != nil {
+		log.Printf("Warning: failed to count input tokens: %v", err)
+		inputTokenCount = 0 // fallback to 0 if counting fails
+	}
+
 	// Call Gemini API
 	geminiResponse, err := s.callGemini(ctx, prompt, temperature, maxTokens)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call Gemini API: %w", err)
 	}
 
+	// Count output tokens
+	outputTokenCount, err := s.countTokens(ctx, geminiResponse)
+	if err != nil {
+		log.Printf("Warning: failed to count output tokens: %v", err)
+		outputTokenCount = 0
+	}
+
 	// Parse and return response
-	return s.parseGeminiResponse(geminiResponse)
+	parsedResponse, err := s.parseGeminiResponse(geminiResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add token counts
+	parsedResponse.InputTokens = inputTokenCount
+	parsedResponse.OutputTokens = outputTokenCount
+
+	return parsedResponse, nil
 }
 
 // callGemini calls the Gemini API using the go-genai SDK
@@ -98,7 +122,24 @@ func (s *GeminiService) parseGeminiResponse(response string) (*CodeGenerationRes
 	explanation := removeCodeBlocks(response)
 
 	return &CodeGenerationResponse{
-		Code:        code,
-		Explanation: strings.TrimSpace(explanation),
+		Code:         code,
+		Explanation:  strings.TrimSpace(explanation),
+		InputTokens:  0, // Will be set by GenerateCode
+		OutputTokens: 0, // Will be set by GenerateCode
 	}, nil
+}
+
+// countTokens counts tokens in text using Gemini's CountTokens API
+func (s *GeminiService) countTokens(ctx context.Context, text string) (int, error) {
+	result, err := s.client.Models.CountTokens(
+		ctx,
+		defaultGeminiModel,
+		genai.Text(text),
+		nil,
+	)
+	if err != nil {
+		return 0, fmt.Errorf("token counting failed: %w", err)
+	}
+
+	return int(result.TotalTokens), nil
 }
