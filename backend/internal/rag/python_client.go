@@ -40,7 +40,7 @@ func NewPythonClient(scriptPath string, timeout time.Duration) *PythonClient {
 		scriptPath = "./scripts/rag_retriever.py"
 	}
 	if timeout == 0 {
-		timeout = 30 * time.Second
+		timeout = 60 * time.Second
 	}
 
 	return &PythonClient{
