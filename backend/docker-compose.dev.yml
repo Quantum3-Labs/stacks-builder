@@ -1,0 +1,6 @@
+# Development compose file with bind mount for local database visibility
+
+services:
+  backend:
+    volumes:
+      - ./data:/app/data
