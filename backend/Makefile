@@ -81,6 +81,31 @@ clean-data:
 	rm -f data/*.db-*
 	@echo "Data cleaned."
 
+# Migration commands
+.PHONY: migrate-up
+migrate-up:
+	@echo "Running migrations up..."
+	migrate -path ./migrations -database "sqlite3://./data/clarity_coder.db" up
+
+.PHONY: migrate-down
+migrate-down:
+	@echo "Running migrations down..."
+	migrate -path ./migrations -database "sqlite3://./data/clarity_coder.db" down
+
+.PHONY: migrate-create
+migrate-create:
+	@read -p "Enter migration name: " name; \
+	migrate create -ext sql -dir ./migrations -seq $$name
+
+.PHONY: migrate-version
+migrate-version:
+	@migrate -path ./migrations -database "sqlite3://./data/clarity_coder.db" version
+
+.PHONY: migrate-force
+migrate-force:
+	@read -p "Enter version to force: " version; \
+	migrate -path ./migrations -database "sqlite3://./data/clarity_coder.db" force $$version
+
 # Docker commands (Production)
 .PHONY: docker-build
 docker-build:
@@ -192,6 +217,13 @@ help:
 	@echo "  make ingest-docs      - Ingest documentation only"
 	@echo "  make setup            - Complete setup (clone + ingest)"
 	@echo "  make clean-data       - Remove all cloned data and ChromaDB"
+	@echo ""
+	@echo "Database Migrations:"
+	@echo "  make migrate-up       - Apply all pending migrations"
+	@echo "  make migrate-down     - Rollback last migration"
+	@echo "  make migrate-create   - Create new migration files"
+	@echo "  make migrate-version  - Show current migration version"
+	@echo "  make migrate-force    - Force migration to specific version (recovery)"
 	@echo ""
 	@echo "Docker (Production):"
 	@echo "  make docker-build     - Build Docker image"

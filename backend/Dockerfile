@@ -34,6 +34,7 @@ RUN pip install --no-cache-dir \
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY scripts/ /app/scripts/
+COPY migrations/ /app/migrations/
 
 RUN mkdir -p /app/data/chromadb /app/data/clarity_code_samples /app/data/clarity_official_docs
 
