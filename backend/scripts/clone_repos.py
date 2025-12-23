@@ -6,7 +6,6 @@ This script clones Clarity repositories and reports progress to the Go backend.
 Outputs newline-delimited JSON progress messages to stdout.
 """
 
-import os
 import sys
 import json
 import subprocess
@@ -16,27 +15,23 @@ from pathlib import Path
 BACKEND_DIR = Path(__file__).parent.parent
 TARGET_DIR = BACKEND_DIR / "data" / "clarity_code_samples"
 
-# Repository URLs (same as clone_clarity_repos.py)
 REPO_URLS = [
-    "https://github.com/clarity-lang/book.git",
-    "https://github.com/clarity-lang/overview.git",
     "https://github.com/hirosystems/clarity-examples.git",
-    "https://github.com/friedger/clarity-smart-contracts.git",
-    "https://github.com/friedger/clarity-marketplace.git",
     "https://github.com/hirosystems/platform-template-nft-marketplace-dapp.git",
-    "https://github.com/weavery/sworn.git",
-    "https://github.com/CoinFabrik/stacy.git",
-    "https://github.com/TheSoftNode/Crowd-Funding-App.git",
-    "https://github.com/erfanyeganegi/droplinked-stacks-contract.git",
-    "https://github.com/FLATLAY/droplinked-stacks-contract.git",
-    "https://github.com/friedger/clarity-stacking-pools.git",
+    "https://github.com/friedger/clarity-marketplace.git",
+    # "https://github.com/clarity-lang/book.git",
+    # "https://github.com/clarity-lang/overview.git",
+    # "https://github.com/friedger/clarity-smart-contracts.git",
+    # "https://github.com/weavery/sworn.git",
+    # "https://github.com/CoinFabrik/stacy.git",
+    # "https://github.com/TheSoftNode/Crowd-Funding-App.git",
+    # "https://github.com/erfanyeganegi/droplinked-stacks-contract.git",
+    # "https://github.com/FLATLAY/droplinked-stacks-contract.git",
+    # "https://github.com/friedger/clarity-stacking-pools.git",
     # "https://github.com/boomcrypto/clarity-deployed-contracts.git",
     # "https://github.com/friedger/clarity-dao.git",
     # "https://github.com/psq/swapr.git",
     # "https://github.com/psq/flexr.git",
-    # "https://github.com/hirosystems/platform-template-nft-marketplace-dapp.git",
-    # "https://github.com/hirosystems/clarity-examples.git",
-    # "https://github.com/friedger/clarity-smart-contracts.git"
 ]
 
 
