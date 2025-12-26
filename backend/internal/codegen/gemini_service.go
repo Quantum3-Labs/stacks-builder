@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultGeminiModel     = "gemini-2.5-flash"
+	defaultGeminiModel     = "gemini-3-flash-preview"
 	defaultGeminiMaxTokens = 8192
 )
 
@@ -94,7 +94,6 @@ func (s *GeminiService) GenerateCode(ctx context.Context, query string, codeCont
 func (s *GeminiService) callGemini(ctx context.Context, prompt string, temperature float64, maxTokens int) (string, error) {
 	config := &genai.GenerateContentConfig{
 		Temperature:     genai.Ptr(float32(temperature)),
-		MaxOutputTokens: int32(maxTokens),
 	}
 
 	result, err := s.client.Models.GenerateContent(
