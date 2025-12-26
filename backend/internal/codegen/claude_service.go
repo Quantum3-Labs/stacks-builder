@@ -1,20 +1,16 @@
 package codegen
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
-	"time"
+
+	"github.com/anthropics/anthropic-sdk-go"
+	"github.com/anthropics/anthropic-sdk-go/option"
 )
 
 const (
-	defaultClaudeModel         = "claude-3-opus-20240229"
-	defaultClaudeEndpoint      = "https://api.anthropic.com/v1/messages"
-	defaultClaudeAPIVersion    = "2023-06-01"
+	defaultClaudeModel         = "claude-sonnet-4-5-20250514"
 	defaultClaudeSystemMessage = "You are an expert Clarity programmer."
 	defaultClaudeMaxTokens     = 4096
 	defaultClaudeTemperature   = 0.7
@@ -22,39 +18,9 @@ const (
 
 // ClaudeService handles code generation using Anthropic Claude API.
 type ClaudeService struct {
-	apiKey        string
+	client        anthropic.Client
 	model         string
-	baseURL       string
-	apiVersion    string
 	systemMessage string
-	httpClient    *http.Client
-}
-
-type claudeMessageContent struct {
-	Type string `json:"type"`
-	Text string `json:"text"`
-}
-
-type claudeMessage struct {
-	Role    string                 `json:"role"`
-	Content []claudeMessageContent `json:"content"`
-}
-
-type claudeRequest struct {
-	Model       string          `json:"model"`
-	System      string          `json:"system,omitempty"`
-	MaxTokens   int             `json:"max_tokens"`
-	Temperature float64         `json:"temperature,omitempty"`
-	Messages    []claudeMessage `json:"messages"`
-}
-
-type claudeContentBlock struct {
-	Type string `json:"type"`
-	Text string `json:"text"`
-}
-
-type claudeResponse struct {
-	Content []claudeContentBlock `json:"content"`
 }
 
 // NewClaudeService creates a new Claude service instance.
@@ -62,25 +28,30 @@ func NewClaudeService(apiKey, model, baseURL, apiVersion, systemMessage string) 
 	if model == "" {
 		model = defaultClaudeModel
 	}
-	if baseURL == "" {
-		baseURL = defaultClaudeEndpoint
-	}
-	if apiVersion == "" {
-		apiVersion = defaultClaudeAPIVersion
-	}
 	if systemMessage == "" {
 		systemMessage = defaultClaudeSystemMessage
 	}
 
+	// Build client options
+	opts := []option.RequestOption{
+		option.WithAPIKey(apiKey),
+	}
+
+	// Add base URL if provided
+	if baseURL != "" {
+		opts = append(opts, option.WithBaseURL(baseURL))
+	}
+
+	// Note: API version is handled automatically by the SDK
+	// but we keep the parameter for backward compatibility
+	_ = apiVersion
+
+	client := anthropic.NewClient(opts...)
+
 	return &ClaudeService{
-		apiKey:        apiKey,
+		client:        client,
 		model:         model,
-		baseURL:       baseURL,
-		apiVersion:    apiVersion,
 		systemMessage: systemMessage,
-		httpClient: &http.Client{
-			Timeout: 60 * time.Second,
-		},
 	}
 }
 
@@ -110,61 +81,46 @@ func (s *ClaudeService) GenerateCode(ctx context.Context, query string, codeCont
 
 	prompt := buildCodeGenerationInstruction(query, codeContexts, docContexts)
 
-	reqPayload := claudeRequest{
-		Model:       s.model,
-		System:      s.systemMessage,
-		MaxTokens:   maxTokens,
-		Temperature: temperature,
-		Messages: []claudeMessage{
+	// Create message using SDK types
+	message, err := s.client.Messages.New(ctx, anthropic.MessageNewParams{
+		Model:       anthropic.Model(s.model),
+		MaxTokens:   int64(maxTokens),
+		Temperature: anthropic.Float(temperature),
+		System: []anthropic.TextBlockParam{
+			{Text: s.systemMessage},
+		},
+		Messages: []anthropic.MessageParam{
 			{
-				Role: "user",
-				Content: []claudeMessageContent{
-					{Type: "text", Text: prompt},
+				Role: anthropic.MessageParamRoleUser,
+				Content: []anthropic.ContentBlockParamUnion{
+					{
+						OfText: &anthropic.TextBlockParam{
+							Text: prompt,
+						},
+					},
 				},
 			},
 		},
-	}
+	})
 
-	body, err := json.Marshal(reqPayload)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal Claude request: %w", err)
+		return nil, fmt.Errorf("failed to generate code with Claude: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, s.baseURL, bytes.NewReader(body))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Claude request: %w", err)
+	// Extract text from response
+	var assistantText string
+	for _, block := range message.Content {
+		// Use type assertion to check for TextBlock
+		if textBlock, ok := block.AsAny().(anthropic.TextBlock); ok {
+			assistantText += textBlock.Text
+		}
 	}
 
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("x-api-key", s.apiKey)
-	httpReq.Header.Set("anthropic-version", s.apiVersion)
-
-	resp, err := s.httpClient.Do(httpReq)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute Claude request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read Claude response: %w", err)
+	if assistantText == "" {
+		return nil, fmt.Errorf("claude response contained no text content")
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("claude API returned status %d: %s", resp.StatusCode, string(respBody))
-	}
-
-	var claudeResp claudeResponse
-	if err := json.Unmarshal(respBody, &claudeResp); err != nil {
-		return nil, fmt.Errorf("failed to parse Claude response: %w", err)
-	}
-
-	if len(claudeResp.Content) == 0 {
-		return nil, fmt.Errorf("claude response contained no content")
-	}
-
-	assistantText := claudeResp.Content[0].Text
-
+	// Extract code blocks and explanation
 	code := extractCodeBlock(assistantText, "clarity")
 	if code == "" {
 		code = extractCodeBlock(assistantText, "")
@@ -173,7 +129,9 @@ func (s *ClaudeService) GenerateCode(ctx context.Context, query string, codeCont
 	explanation := removeCodeBlocks(assistantText)
 
 	return &CodeGenerationResponse{
-		Code:        code,
-		Explanation: explanation,
+		Code:         code,
+		Explanation:  explanation,
+		InputTokens:  int(message.Usage.InputTokens),
+		OutputTokens: int(message.Usage.OutputTokens),
 	}, nil
 }
