@@ -1,55 +1,26 @@
 package codegen
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
-	"time"
+
+	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/option"
+	"github.com/openai/openai-go/packages/param"
 )
 
 const (
-	defaultOpenAIModel         = "gpt-3.5-turbo"
-	defaultOpenAIEndpoint      = "https://api.openai.com/v1/chat/completions"
+	defaultOpenAIModel         = openai.ChatModelGPT4o
 	defaultOpenAISystemMessage = "You are a Clarity expert."
 	defaultOpenAIMaxTokens     = 4096
 )
 
 // OpenAIService handles code generation using OpenAI chat completions API.
 type OpenAIService struct {
-	apiKey        string
+	client        openai.Client
 	model         string
-	baseURL       string
 	systemMessage string
-	httpClient    *http.Client
-}
-
-// OpenAIMessage represents a chat message for OpenAI requests.
-type OpenAIMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-// openAIRequest models the JSON payload for OpenAI chat completions.
-type openAIRequest struct {
-	Model       string          `json:"model"`
-	Messages    []OpenAIMessage `json:"messages"`
-	Temperature float64         `json:"temperature,omitempty"`
-	MaxTokens   int             `json:"max_tokens,omitempty"`
-}
-
-// openAIChoice represents a single completion choice.
-type openAIChoice struct {
-	Index   int           `json:"index"`
-	Message OpenAIMessage `json:"message"`
-}
-
-// openAIResponse models the OpenAI chat completions response.
-type openAIResponse struct {
-	Choices []openAIChoice `json:"choices"`
 }
 
 // NewOpenAIService creates a new OpenAI service instance.
@@ -57,21 +28,24 @@ func NewOpenAIService(apiKey, model, baseURL, systemMessage string) *OpenAIServi
 	if model == "" {
 		model = defaultOpenAIModel
 	}
-	if baseURL == "" {
-		baseURL = defaultOpenAIEndpoint
-	}
 	if systemMessage == "" {
 		systemMessage = defaultOpenAISystemMessage
 	}
 
+	// Build client options
+	opts := []option.RequestOption{
+		option.WithAPIKey(apiKey),
+	}
+	if baseURL != "" {
+		opts = append(opts, option.WithBaseURL(baseURL))
+	}
+
+	client := openai.NewClient(opts...)
+
 	return &OpenAIService{
-		apiKey:        apiKey,
+		client:        client,
 		model:         model,
-		baseURL:       baseURL,
 		systemMessage: systemMessage,
-		httpClient: &http.Client{
-			Timeout: 60 * time.Second,
-		},
 	}
 }
 
@@ -100,54 +74,28 @@ func (s *OpenAIService) GenerateCode(ctx context.Context, query string, codeCont
 
 	prompt := buildCodeGenerationInstruction(query, codeContexts, docContexts)
 
-	reqPayload := openAIRequest{
-		Model: s.model,
-		Messages: []OpenAIMessage{
-			{Role: "system", Content: s.systemMessage},
-			{Role: "user", Content: prompt},
+	// Build the chat completion request
+	params := openai.ChatCompletionNewParams{
+		Messages: []openai.ChatCompletionMessageParamUnion{
+			openai.SystemMessage(s.systemMessage),
+			openai.UserMessage(prompt),
 		},
-		Temperature: temperature,
-		MaxTokens:   maxTokens,
+		Model:       s.model,
+		Temperature: param.NewOpt(temperature),
+		MaxTokens:   param.NewOpt(int64(maxTokens)),
 	}
 
-	body, err := json.Marshal(reqPayload)
+	// Call the OpenAI API
+	chatCompletion, err := s.client.Chat.Completions.New(ctx, params)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal OpenAI request: %w", err)
+		return nil, fmt.Errorf("failed to create chat completion: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, s.baseURL, bytes.NewReader(body))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create OpenAI request: %w", err)
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer "+s.apiKey)
-
-	resp, err := s.httpClient.Do(httpReq)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute OpenAI request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read OpenAI response: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("openai API returned status %d: %s", resp.StatusCode, string(respBody))
-	}
-
-	var openAIResp openAIResponse
-	if err := json.Unmarshal(respBody, &openAIResp); err != nil {
-		return nil, fmt.Errorf("failed to parse OpenAI response: %w", err)
-	}
-
-	if len(openAIResp.Choices) == 0 {
+	if len(chatCompletion.Choices) == 0 {
 		return nil, fmt.Errorf("openai response contained no choices")
 	}
 
-	assistantText := openAIResp.Choices[0].Message.Content
+	assistantText := chatCompletion.Choices[0].Message.Content
 
 	code := extractCodeBlock(assistantText, "clarity")
 	if code == "" {
@@ -157,7 +105,9 @@ func (s *OpenAIService) GenerateCode(ctx context.Context, query string, codeCont
 	explanation := removeCodeBlocks(assistantText)
 
 	return &CodeGenerationResponse{
-		Code:        code,
-		Explanation: explanation,
+		Code:         code,
+		Explanation:  explanation,
+		InputTokens:  int(chatCompletion.Usage.PromptTokens),
+		OutputTokens: int(chatCompletion.Usage.CompletionTokens),
 	}, nil
 }
